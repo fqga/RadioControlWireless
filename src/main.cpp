@@ -18,18 +18,24 @@ uint8_t broadcastAddress[]  = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 // Create a struct_message called myData
 uint8_t myData [50] = {0};
 
+byte receivedBytes[50];
+byte numReceived = 0;
+static byte ndx = 0;
+byte rb;
+
+
+
 unsigned long lastTime = 0;  
 unsigned long timerDelay = 2000;  // send readings timer
 
 // Callback function that will be executed when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 
-  digitalWrite(9, HIGH);
   digitalWrite(2, !digitalRead(2));
-  memcpy(myData, incomingData, sizeof(myData));
-
+  memcpy(myData, incomingData, len);
+  myData[len] = '\0';
   Serial.print((char*)myData);
-  digitalWrite(9, LOW);
+
   /*
   Serial.print("Bytes received: ");
   Serial.println(len);
@@ -45,7 +51,7 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 // Callback when data is sent
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 
-  /*
+  
   char macStr[18];
   Serial.print("Packet to:");
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -61,16 +67,16 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
     Serial.println("Delivery fail");
   }
 
-  */
-  digitalWrite(5, !digitalRead(5));
+  
+  digitalWrite(2, !digitalRead(2));
 }
 
 
 
 void setup() {
   // Establecer el pin del LED en modo salida
-  pinMode(9, OUTPUT);
-  digitalWrite(9, LOW);
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH);
   // Init Serial Monitor
   Serial.begin(115200);
  
@@ -84,26 +90,21 @@ void setup() {
     return;
   }
 
+  // Set ESP-NOW Role
+  esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+
+
+    // Once ESPNow is successfully Init, we will register for Send CB to
+  // get the status of Trasnmitted packet
+  esp_now_register_send_cb(OnDataSent);
+
+  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+
   // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
-  esp_now_set_self_role(ESP_NOW_ROLE_SLAVE);
   esp_now_register_recv_cb(OnDataRecv);
 
 
-
-
-
-  esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
-  
-  // Once ESPNow is successfully Init, we will register for Send CB to
-  // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
-  
-  // Register peer
-  //esp_now_add_peer(broadcastAddress1, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
-  //esp_now_add_peer(broadcastAddress2, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
-  //esp_now_add_peer(broadcastAddress3, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
-  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
 
 
 
@@ -111,19 +112,46 @@ void setup() {
 }
  
 void loop() {
-  if ((millis() - lastTime) > timerDelay) {
+  // if ((millis() - lastTime) > timerDelay) {
 
-    /*
-    // Set values to send
-    test.x = random(1, 50);
-    test.y = random(1, 50);
-    */
+  //   /*
+  //   // Set values to send
+  //   test.x = random(1, 50);
+  //   test.y = random(1, 50);
+  //   */
 
    
-    // Send message via ESP-NOW
-    esp_now_send(0, (uint8_t *) &test, sizeof(test));
+  //   // Send message via ESP-NOW
+  //   esp_now_send(0, (uint8_t *) &test, sizeof(test));
 
-    lastTime = millis();
+  //   lastTime = millis();
+    
+  // }
+
+if ((millis() - lastTime) > timerDelay) {
+  
+  while (Serial.available() > 0) {
+      rb = Serial.read();
+      receivedBytes[ndx] = rb;
+      ndx++;
+  }
+
+  if(ndx != 0){
+
+    receivedBytes[ndx] = '\0'; // terminate the string
+    numReceived = ndx;  // save the number for use when printing
+    esp_now_send(0, receivedBytes, numReceived);
+    ndx = 0;
+    if (Serial.available() > 0){
+      Serial.read();
+      }
     
   }
+
+
+   lastTime = millis();
+    
+}
+
+
 }
