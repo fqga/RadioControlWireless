@@ -16,9 +16,9 @@
 uint8_t broadcastAddress[]  = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 // Create a struct_message called myData
-uint8_t myData [50] = {0};
+uint8_t myData [256] = {0};
 
-byte receivedBytes[50];
+byte receivedBytes[256];
 byte numReceived = 0;
 static byte ndx = 0;
 byte rb;
@@ -26,16 +26,17 @@ byte rb;
 
 
 unsigned long lastTime = 0;  
-unsigned long timerDelay = 2000;  // send readings timer
+unsigned long timerDelay = 500;  // send readings timer
 
 // Callback function that will be executed when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 
+  digitalWrite(0, HIGH);
   digitalWrite(2, !digitalRead(2));
   memcpy(myData, incomingData, len);
   myData[len] = '\0';
   Serial.print((char*)myData);
-
+  digitalWrite(0, LOW);
   /*
   Serial.print("Bytes received: ");
   Serial.println(len);
@@ -76,7 +77,9 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void setup() {
   // Establecer el pin del LED en modo salida
   pinMode(2, OUTPUT);
+  pinMode(0, OUTPUT);
   digitalWrite(2, HIGH);
+  digitalWrite(0, LOW);
   // Init Serial Monitor
   Serial.begin(115200);
  
