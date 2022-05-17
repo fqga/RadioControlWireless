@@ -31,12 +31,15 @@ unsigned long timerDelay = 500;  // send readings timer
 // Callback function that will be executed when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 
-  digitalWrite(0, HIGH);
   digitalWrite(2, !digitalRead(2));
   memcpy(myData, incomingData, len);
   myData[len] = '\0';
   Serial.print((char*)myData);
-  digitalWrite(0, LOW);
+  //digitalWrite(0, HIGH);
+  digitalWrite(4, HIGH);
+  delay(100);
+  //digitalWrite(0, LOW);
+  digitalWrite(4, LOW);
   /*
   Serial.print("Bytes received: ");
   Serial.println(len);
@@ -77,11 +80,15 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void setup() {
   // Establecer el pin del LED en modo salida
   pinMode(2, OUTPUT);
-  pinMode(0, OUTPUT);
+  pinMode(4, OUTPUT); //Pin WD como salida
+  //pinMode(0, OUTPUT); 
+  pinMode(15, OUTPUT);  //Pin Enable 485
   digitalWrite(2, HIGH);
-  digitalWrite(0, LOW);
+  digitalWrite(4, LOW); //Pin WD en Bajo
+  //digitalWrite(0, LOW);
+  digitalWrite(15, HIGH); //Pin Enable 485 en BAJO
   // Init Serial Monitor
-  Serial.begin(115200);
+  Serial.begin(9600);
  
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -132,6 +139,8 @@ void loop() {
   // }
 
 if ((millis() - lastTime) > timerDelay) {
+
+  //Serial.println("Testing\r\n");
   
   while (Serial.available() > 0) {
       rb = Serial.read();
