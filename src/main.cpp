@@ -12,11 +12,16 @@
 #include <ESP8266WiFi.h>
 #include <espnow.h>
 
+// #define TX_TEST
+
 // REPLACE WITH RECEIVER MAC Address
 uint8_t broadcastAddress[]  = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 // Create a struct_message called myData
 uint8_t myData [256] = {0};
+char myData2 [] = "mensaje de prueba";
+char myData3[40];
+uint8_t i = 0;
 
 byte receivedBytes[256];
 byte numReceived = 0;
@@ -24,9 +29,24 @@ static byte ndx = 0;
 byte rb;
 
 
+// Structure example to send data
+// Must match the receiver structure
+typedef struct test_struct {
+    int x;
+    int y;
+} test_struct;
 
-unsigned long lastTime = 0;  
-unsigned long timerDelay = 500;  // send readings timer
+// Create a struct_message called test to store variables to be sent
+test_struct test = {};
+
+unsigned long lastTime = 0;
+unsigned long lastTimePollBuffer = 0;
+unsigned long lastTimeWatchDog = 0;
+
+unsigned long timerTransmit = 3000;
+unsigned long timerPollBuffer = 500;  // send readings timer
+unsigned long timerWatchDogRefresh = 200;
+
 
 // Callback function that will be executed when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
@@ -34,12 +54,12 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   digitalWrite(2, !digitalRead(2));
   memcpy(myData, incomingData, len);
   myData[len] = '\0';
+  Serial.print("Bytes received: ");
   Serial.print((char*)myData);
+
   //digitalWrite(0, HIGH);
-  digitalWrite(4, HIGH);
-  delay(100);
-  //digitalWrite(0, LOW);
   digitalWrite(4, LOW);
+  lastTimeWatchDog = millis();
   /*
   Serial.print("Bytes received: ");
   Serial.println(len);
@@ -84,7 +104,7 @@ void setup() {
   //pinMode(0, OUTPUT); 
   pinMode(15, OUTPUT);  //Pin Enable 485
   digitalWrite(2, HIGH);
-  digitalWrite(4, LOW); //Pin WD en Bajo
+  digitalWrite(4, HIGH); //Pin WD en Bajo
   //digitalWrite(0, LOW);
   digitalWrite(15, HIGH); //Pin Enable 485 en BAJO
   // Init Serial Monitor
@@ -122,23 +142,49 @@ void setup() {
 }
  
 void loop() {
-  // if ((millis() - lastTime) > timerDelay) {
 
-  //   /*
-  //   // Set values to send
-  //   test.x = random(1, 50);
-  //   test.y = random(1, 50);
-  //   */
+  if (digitalRead(4) == LOW){
 
-   
-  //   // Send message via ESP-NOW
-  //   esp_now_send(0, (uint8_t *) &test, sizeof(test));
+    if ((millis() - lastTimeWatchDog) > timerWatchDogRefresh){
 
-  //   lastTime = millis();
+      digitalWrite(4, HIGH);
+
+      
+
+    }
+
+
+
+  } 
+
+#ifdef TX_TEST
+
+  if ((millis() - lastTime) > timerTransmit) {
+
+ 
     
-  // }
+    
+    // Set values to send
+    test.x = random(1, 50);
+    test.y = random(1, 50);
 
-if ((millis() - lastTime) > timerDelay) {
+
+    sprintf(myData3,"%s %d %d %d\r\n",myData2, i, test.x, test.y);
+    
+   
+    // Send message via ESP-NOW
+    //esp_now_send(0, (uint8_t *) &test, sizeof(test)+1);
+    esp_now_send(0, (uint8_t*)myData3, sizeof(myData3));
+    i++;
+
+    lastTime = millis();
+    
+  }
+
+
+#else
+
+if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
 
   //Serial.println("Testing\r\n");
   
@@ -161,9 +207,15 @@ if ((millis() - lastTime) > timerDelay) {
   }
 
 
-   lastTime = millis();
+   lastTimePollBuffer = millis();
     
 }
 
+#endif
 
 }
+
+
+
+
+
