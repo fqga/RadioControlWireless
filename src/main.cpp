@@ -52,10 +52,11 @@ unsigned long timerWatchDogRefresh = 200;
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 
   digitalWrite(2, !digitalRead(2));
-  memcpy(myData, incomingData, len);
-  myData[len] = '\0';
-  Serial.print("Bytes received: ");
-  Serial.print((char*)myData);
+  // memcpy(myData, incomingData, len);
+  // myData[len] = '\0';
+  // Serial.print("Bytes received: ");
+  // Serial.print((char*)myData);
+  Serial.write(incomingData,uint16_t(len));
 
   //digitalWrite(0, HIGH);
   digitalWrite(4, LOW);
@@ -75,7 +76,7 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 // Callback when data is sent
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 
-  
+  /*
   char macStr[18];
   Serial.print("Packet to:");
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -90,7 +91,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   else{
     Serial.println("Delivery fail");
   }
-
+*/
   
   digitalWrite(2, !digitalRead(2));
 }
@@ -169,12 +170,12 @@ void loop() {
     test.y = random(1, 50);
 
 
-    sprintf(myData3,"%s %d %d %d\r\n",myData2, i, test.x, test.y);
+    sprintf(myData3,"%s %d %d %d",myData2, i, test.x, test.y);
     
    
     // Send message via ESP-NOW
     //esp_now_send(0, (uint8_t *) &test, sizeof(test)+1);
-    esp_now_send(0, (uint8_t*)myData3, sizeof(myData3));
+    esp_now_send(0, (uint8_t*)myData3, strlen(myData3));
     i++;
 
     lastTime = millis();
@@ -200,9 +201,12 @@ if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
     numReceived = ndx;  // save the number for use when printing
     esp_now_send(0, receivedBytes, numReceived);
     ndx = 0;
+    /*
     if (Serial.available() > 0){
       Serial.read();
       }
+    */
+    Serial.read();
     
   }
 
