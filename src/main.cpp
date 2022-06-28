@@ -56,7 +56,15 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   // myData[len] = '\0';
   // Serial.print("Bytes received: ");
   // Serial.print((char*)myData);
+
+
+  digitalWrite(15, HIGH); //Pin Enable TX RS485 en BAJO
+  
   Serial.write(incomingData,uint16_t(len));
+  
+ 
+  // digitalWrite(15, LOW); //Pin Enable RX RS485ç
+  
 
   //digitalWrite(0, HIGH);
   digitalWrite(4, LOW);
@@ -107,7 +115,7 @@ void setup() {
   digitalWrite(2, HIGH);
   digitalWrite(4, HIGH); //Pin WD en Bajo
   //digitalWrite(0, LOW);
-  digitalWrite(15, HIGH); //Pin Enable 485 en BAJO
+  digitalWrite(15, LOW); //Pin Enable 485 en ALTO / para recibir
   // Init Serial Monitor
   Serial.begin(9600);
  
@@ -149,7 +157,7 @@ void loop() {
     if ((millis() - lastTimeWatchDog) > timerWatchDogRefresh){
 
       digitalWrite(4, HIGH);
-
+      digitalWrite(15, LOW); //Pin Enable RX RS485
       
 
     }
@@ -199,7 +207,10 @@ if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
 
     receivedBytes[ndx] = '\0'; // terminate the string
     numReceived = ndx;  // save the number for use when printing
-    esp_now_send(0, receivedBytes, numReceived);
+    if(numReceived > 1){
+      esp_now_send(0, receivedBytes, numReceived);
+    }
+    
     ndx = 0;
     /*
     if (Serial.available() > 0){
