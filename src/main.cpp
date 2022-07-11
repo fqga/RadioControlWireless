@@ -26,6 +26,7 @@ uint8_t i = 0;
 byte receivedBytes[256];
 byte numReceived = 0;
 static byte ndx = 0;
+static byte cnt = 0;
 byte rb;
 
 
@@ -44,7 +45,7 @@ unsigned long lastTimePollBuffer = 0;
 unsigned long lastTimeWatchDog = 0;
 
 unsigned long timerTransmit = 3000;
-unsigned long timerPollBuffer = 500;  // send readings timer
+unsigned long timerPollBuffer = 20;  // send readings timer
 unsigned long timerWatchDogRefresh = 200;
 
 
@@ -58,7 +59,7 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   // Serial.print((char*)myData);
 
 
-  digitalWrite(15, HIGH); //Pin Enable TX RS485 en BAJO
+  // digitalWrite(15, HIGH); //Pin Enable TX RS485 en BAJO
   
   Serial.write(incomingData,uint16_t(len));
   
@@ -115,9 +116,10 @@ void setup() {
   digitalWrite(2, HIGH);
   digitalWrite(4, HIGH); //Pin WD en Bajo
   //digitalWrite(0, LOW);
-  digitalWrite(15, LOW); //Pin Enable 485 en ALTO / para recibir
+  digitalWrite(15, HIGH); //Pin Enable 485 en ALTO / para recibir
   // Init Serial Monitor
   Serial.begin(9600);
+  // Serial.setRxBufferSize(256);
  
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -201,27 +203,34 @@ if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
       rb = Serial.read();
       receivedBytes[ndx] = rb;
       ndx++;
+      cnt++;
   }
 
-  if(ndx != 0){
+  Serial.read();
 
-    receivedBytes[ndx] = '\0'; // terminate the string
-    numReceived = ndx;  // save the number for use when printing
-    if(numReceived > 1){
-      esp_now_send(0, receivedBytes, numReceived);
-    }
-    
-    ndx = 0;
-    /*
-    if (Serial.available() > 0){
-      Serial.read();
+  if(cnt >= 3){
+    if(ndx != 0){
+
+      receivedBytes[ndx] = '\0'; // terminate the string
+      numReceived = ndx;  // save the number for use when printing
+      if(numReceived > 1){
+        esp_now_send(0, receivedBytes, numReceived);
+        Serial.write(receivedBytes, numReceived);
+        Serial.flush();
       }
-    */
-    Serial.read();
-    
+      
+      ndx = 0;
+      cnt = 0;
+      /*
+      if (Serial.available() > 0){
+        Serial.read();
+        }
+      */
+      // Serial.read();
+      
+    }
+
   }
-
-
    lastTimePollBuffer = millis();
     
 }
