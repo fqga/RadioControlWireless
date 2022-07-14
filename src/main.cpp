@@ -24,7 +24,7 @@ char myData2 [] = "mensaje de prueba";
 char myData3[40];
 uint8_t i = 0;
 
-byte receivedBytes[256];
+byte receivedBytes[512];
 byte numReceived = 0;
 static byte ndx = 0;
 static byte cnt = 0;
@@ -47,7 +47,7 @@ unsigned long lastTimePollBuffer = 0;
 unsigned long lastTimeWatchDog = 0;
 
 unsigned long timerTransmit = 3000;
-unsigned long timerPollBuffer = 20;  // send readings timer
+unsigned long timerPollBuffer = 2;  // send readings timer
 unsigned long timerWatchDogRefresh = 200;
 
 
@@ -281,25 +281,27 @@ void loop() {
 if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
 
   //Serial.println("Testing\r\n");
-  
-  while (Serial.available() > 0) {
+
+  if (Serial.available() > 0){
+
+    while (Serial.available() > 0) {
       rb = Serial.read();
       receivedBytes[ndx] = rb;
       ndx++;
-  }
+    }
 
-  // Serial.read();
-  if(ndx != 0){
+  }else{
+    if(ndx != 0){
     receivedBytes[ndx] = '\0'; // terminate the string
     numReceived = ndx;  // save the number for use when printing
-    if(numReceived > 1){
+    // if(numReceived > 1){
       esp_now_send(0, receivedBytes, numReceived);
       // Serial.write(receivedBytes, numReceived);
       // Serial.flush();
-    }
+    // }
     
     ndx = 0;
-    cnt = 0;
+    
     /*
     if (Serial.available() > 0){
       Serial.read();
@@ -307,7 +309,13 @@ if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
     */
     // Serial.read();
     
+    }
+
+
+    
   }
+  // Serial.read();
+
 
   
    lastTimePollBuffer = millis();
