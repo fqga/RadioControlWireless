@@ -61,12 +61,12 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   // Serial.print((char*)myData);
 
 
-  // digitalWrite(15, HIGH); //Pin Enable TX RS485 en BAJO
+  digitalWrite(15, HIGH); //Pin Enable TX RS485 en BAJO
   
   Serial.write(incomingData,uint16_t(len));
   
  
-  // digitalWrite(15, LOW); //Pin Enable RX RS485ç
+  digitalWrite(15, LOW); //Pin Enable RX RS485ç
   
 
   //digitalWrite(0, HIGH);
@@ -198,7 +198,7 @@ void setup() {
   digitalWrite(2, HIGH);
   digitalWrite(4, HIGH); //Pin WD en Bajo
   //digitalWrite(0, LOW);
-  digitalWrite(15, HIGH); //Pin Enable 485 en ALTO / para recibir
+  digitalWrite(15, LOW); //Pin Enable 485 en ALTO / para recibir
   // Init Serial Monitor
   Serial.begin(9600);
   // Serial.setRxBufferSize(256);
