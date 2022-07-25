@@ -13,7 +13,7 @@
 #include <espnow.h>
 #include "uart_register.h"
 
-// #define TX_TEST
+#define TX_TEST
 
 // REPLACE WITH RECEIVER MAC Address
 uint8_t broadcastAddress[]  = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -62,15 +62,12 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 
 
   digitalWrite(15, HIGH); //Pin Enable TX RS485 en BAJO
-  
   Serial.write(incomingData,uint16_t(len));
-  
- 
-  digitalWrite(15, LOW); //Pin Enable RX RS485ç
+  digitalWrite(15, LOW); //Pin Enable RX RS485
   
 
   //digitalWrite(0, HIGH);
-  digitalWrite(4, LOW);
+  digitalWrite(4, HIGH);
   lastTimeWatchDog = millis();
   /*
   Serial.print("Bytes received: ");
@@ -196,7 +193,7 @@ void setup() {
   //pinMode(0, OUTPUT); 
   pinMode(15, OUTPUT);  //Pin Enable 485
   digitalWrite(2, HIGH);
-  digitalWrite(4, HIGH); //Pin WD en Bajo
+  digitalWrite(4, LOW); //Pin WD en Bajo
   //digitalWrite(0, LOW);
   digitalWrite(15, LOW); //Pin Enable 485 en ALTO / para recibir
   // Init Serial Monitor
@@ -206,6 +203,8 @@ void setup() {
  
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
+  // WiFi.setPhyMode(WIFI_PHY_MODE_11B);
+  WiFi.setOutputPower(20.5);
   WiFi.disconnect();
 
   // Init ESP-NOW
@@ -237,11 +236,11 @@ void setup() {
  
 void loop() {
 
-  if (digitalRead(4) == LOW){
+  if (digitalRead(4) == HIGH){
 
     if ((millis() - lastTimeWatchDog) > timerWatchDogRefresh){
 
-      digitalWrite(4, HIGH);
+      digitalWrite(4, LOW);
 
       
 
@@ -294,11 +293,11 @@ if ((millis() - lastTimePollBuffer) > timerPollBuffer) {
     if(ndx != 0){
     receivedBytes[ndx] = '\0'; // terminate the string
     numReceived = ndx;  // save the number for use when printing
-    // if(numReceived > 1){
+    if(numReceived > 1){
       esp_now_send(0, receivedBytes, numReceived);
       // Serial.write(receivedBytes, numReceived);
       // Serial.flush();
-    // }
+    }
     
     ndx = 0;
     
